@@ -117,21 +117,6 @@ class histogram_binning_posterior_estimator(nn.Module):
                          softmax scores for all classes sum to 1.0
         """
 
-        """
-        # this processing 1 example at a time
-        sm_argmax, pred = torch.max(sm,dim=0)
-        mask = torch.ones_like(sm,dtype=int)
-        mask[pred] = 0
-
-        # get calibrated softmax for argmax-selected class
-        sm_calib = self.get_posterior(sm_argmax)
-        remain_norm = 1.0 - sm_calib
-        rescaled_sm = sm*mask
-        rescaled_sm = remain_norm*(rescaled_sm/np.sum(rescaled_sm))
-        rescaled_sm[pred] = sm_calib
-
-        return rescaled_sm
-        """
         with torch.no_grad():
             # this process a batch of examples at a time
             sm_argmax, predictions = torch.max(sm, dim=1)
@@ -148,7 +133,7 @@ class histogram_binning_posterior_estimator(nn.Module):
                 rescaled_sm[pred] = est_posterior
                 # in case some tiny numerical inpreicison
                 sm_calib[i] = rescaled_sm/torch.sum(rescaled_sm)
-        return sm_calib
+            return sm_calib
 
     def viz_of_mapping_function(self):
         """
