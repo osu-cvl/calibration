@@ -83,6 +83,7 @@ class histogram_binning_posterior_estimator(nn.Module):
                 if verbose:
                     print(f'estimating {i+1}/{self.n_bins} bins')
 
+
     def get_posterior(self,sm_query):
         """
         Args:
