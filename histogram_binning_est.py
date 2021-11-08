@@ -134,10 +134,10 @@ class histogram_binning_posterior_estimator(nn.Module):
             n_examples, n_classes = sm.shape
 
             sm_calib = torch.empty([n_examples, n_classes], dtype=float)
-            valid_cnt = 0
+            valid_flag = torch.empty([n_examples,])
             for i, (sm_pred, pred) in enumerate(zip(sm_argmax,predictions)):
                 est_posterior, cnt = self.get_posterior(sm_pred)
-                valid_cnt += cnt
+                valid_flag[i] = cnt
                 mask = torch.ones_like(sm[0], dtype=float)
                 mask[pred] = 0
                 remain_norm = 1.0 - est_posterior
@@ -147,9 +147,9 @@ class histogram_binning_posterior_estimator(nn.Module):
                 # in case some tiny numerical impreicison
                 sm_calib[i] = rescaled_sm/torch.sum(rescaled_sm)
 
-            # print(f'valid estimation: {valid_cnt}/{n_examples}')
+            # print(f'valid estimation: {torch.sum(valid_flag).item()}/{n_examples}')
 
-            return sm_calib
+            return sm_calib, valid_flag
 
     def viz_of_mapping_function(self):
         """
@@ -251,7 +251,8 @@ if __name__=='__main__':
     with torch.no_grad():
         for i, (input, label) in enumerate(test_loader):
             input = input.to(device)
-            sm_calib = hist_est(input)
+            # return calibrated softmax vector and flags for valid calibration
+            sm_calib, _ = hist_est(input)
             sm_list.append(sm_calib)
             label_list.append(label)
             print(f'calibrating {i+1}/{len(test_loader)} batches')
