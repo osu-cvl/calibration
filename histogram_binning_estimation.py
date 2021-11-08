@@ -12,7 +12,7 @@ from scipy.special import softmax
 
 class histogram_binning_posterior_estimator(object):
 
-    def __init__(self,logit,gt,n_bin=10):
+    def __init__(self,logit,gt,n_bin=15):
         """
         Args:
             logit: ndarray of logit vectors with shape (n_example,n_class)
