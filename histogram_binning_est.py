@@ -94,7 +94,11 @@ class histogram_binning_posterior_estimator(nn.Module):
         Args:
             sm_query: torch.tensor(scalar), argmax selected class's raw softmax score
         Return:
-            res: torch.tensor(scalar), estimated label posterior from histogram binning
+            res: tuple(torch.tensor(scalar), flag), where torch.tensor(scalar)
+                 is the estimated label posterior from histogram binning, and
+                 flag indicates whether the estimation is valid (1) or not (0)
+                 Estimated value could be undefined due to encountering of empty
+                 bin corresponding to the input sm_query softmax value
         """
         if sm_query<0.0 or sm_query>1.0:
             raise ValueError(f'incorrect softmax query input: {sm_query:.2f} exceeding range of (0,1)')
@@ -107,16 +111,16 @@ class histogram_binning_posterior_estimator(nn.Module):
         # no bin precision available at the query softmax score
         # return its own value back
         if res == -1.0:
-            return sm_query
+            return (sm_query, 0)
         else:
-            return res
+            return (res, 1)
 
     def get_calibrated_softmax_vector(self,sm):
         """
         Args:
-            sm: softmax vector of shape (n_class,)
+            sm: softmax vector of shape (n_class, n_example)
         Return:
-            rescaled_sm: calibrated softmax vector of shape (n_class,)
+            rescaled_sm: calibrated softmax vector of shape (n_class, n_example)
                          with its argmax selected softmax score calibrated
                          according to histogram binning and the remaining
                          softmax scores rescaled linearly such that the
@@ -130,8 +134,10 @@ class histogram_binning_posterior_estimator(nn.Module):
             n_examples, n_classes = sm.shape
 
             sm_calib = torch.empty([n_examples, n_classes], dtype=float)
+            valid_cnt = 0
             for i, (sm_pred, pred) in enumerate(zip(sm_argmax,predictions)):
-                est_posterior = self.get_posterior(sm_pred)
+                est_posterior, cnt = self.get_posterior(sm_pred)
+                valid_cnt += cnt
                 mask = torch.ones_like(sm[0], dtype=float)
                 mask[pred] = 0
                 remain_norm = 1.0 - est_posterior
@@ -140,6 +146,9 @@ class histogram_binning_posterior_estimator(nn.Module):
                 rescaled_sm[pred] = est_posterior
                 # in case some tiny numerical impreicison
                 sm_calib[i] = rescaled_sm/torch.sum(rescaled_sm)
+
+            # print(f'valid estimation: {valid_cnt}/{n_examples}')
+
             return sm_calib
 
     def viz_of_mapping_function(self):
