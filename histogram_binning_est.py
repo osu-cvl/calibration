@@ -1,4 +1,9 @@
 """
+Authors: Tong Liang, Jim Davis
+Affiliation: Computer Vision Lab, Ohio State University
+Email:
+Date: 10/25/2021
+
 histogram binning estimation [1] of label posteriors for argmax-selected
 predictions linear scaling of the remaining classes' softmax.
 
@@ -115,7 +120,8 @@ class histogram_binning_posterior_estimator(nn.Module):
                          with its argmax selected softmax score calibrated
                          according to histogram binning and the remaining
                          softmax scores rescaled linearly such that the
-                         softmax scores for all classes sum to 1.0
+                         softmax scores for all classes sum to 1.0, this may
+                         alter the argmax-selection result
         """
 
         with torch.no_grad():
@@ -132,7 +138,7 @@ class histogram_binning_posterior_estimator(nn.Module):
                 rescaled_sm = sm[i]*mask
                 rescaled_sm = remain_norm*(rescaled_sm/torch.sum(rescaled_sm))
                 rescaled_sm[pred] = est_posterior
-                # in case some tiny numerical inpreicison
+                # in case some tiny numerical impreicison
                 sm_calib[i] = rescaled_sm/torch.sum(rescaled_sm)
             return sm_calib
 
@@ -216,10 +222,11 @@ if __name__=='__main__':
 
     # load base model
     base_model = load_model(model_path)
+    device = 'cuda'
 
     # init class instance
     n_bins = 15
-    hist_est = histogram_binning_posterior_estimator(base_model,n_bins,'cuda')
+    hist_est = histogram_binning_posterior_estimator(base_model,n_bins,device)
 
     # run histogram binning on validation set
     hist_est.histogram_binning(val_loader,True)
@@ -234,7 +241,7 @@ if __name__=='__main__':
     label_list = []
     with torch.no_grad():
         for i, (input, label) in enumerate(test_loader):
-            input = input.to('cuda')
+            input = input.to(device)
             sm_calib = hist_est(input)
             sm_list.append(sm_calib)
             label_list.append(label)
