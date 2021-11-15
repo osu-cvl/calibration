@@ -2,7 +2,7 @@
 This repo contains the following calibration methods for deep neural networks:
 - temperature scaling
 - class-wise temperature scaling
-- histogram binning [[1](#1)]
+- histogram binning [1]
 
 ## Setup
 - python 3.x
@@ -11,7 +11,7 @@ This repo contains the following calibration methods for deep neural networks:
 - numpy
 
 ## Histogram Binning
-The histogram binning [[1](#1)] approach is implemented within the class `histogram_binning_calibration`. Further more, a linear rescaling of the remaining
+The histogram binning [1] approach is implemented within the class `histogram_binning_calibration`. Further more, a linear rescaling of the remaining
 softmax scores according to the calibrated argmax-selected softmax score is also
 implemented.
 
@@ -37,12 +37,5 @@ sm_calib, flags, preds = hist_est(test_data)
 ```
 
 
-
-
-
-
-
-
-
 ## Reference
-[[1](#1)] Zadrozny, Bianca and Elkan, Charles. Obtaining calibrated probability estimates from decision trees and naive bayesian classifiers. In ICML, pp. 609–616, 2001.
+[1] Zadrozny, Bianca and Elkan, Charles. Obtaining calibrated probability estimates from decision trees and naive bayesian classifiers. In ICML, pp. 609–616, 2001.
