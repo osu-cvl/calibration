@@ -37,6 +37,12 @@ hist_est.histogram_binning(val_loader)
 sm_calib, flags, preds = hist_est(test_data)
 ```
 
+#### Visualization of the mapping between raw softmax and calibrated posterior
+```python
+# call the viz_of_mapping_function() method after applying histogram binning
+hist_est.viz_of_mapping_function()
+```
+![histogram mapping](assets\histogram_mapping_viz.pdf)
 
 ## Reference
 [1] Zadrozny, Bianca and Elkan, Charles. Obtaining calibrated probability estimates from decision trees and naive bayesian classifiers. In ICML, pp. 609–616, 2001.
