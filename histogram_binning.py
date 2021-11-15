@@ -1,11 +1,11 @@
 """
 Authors: Tong Liang, Jim Davis
 Affiliation: Computer Vision Lab, Ohio State University
-Email:
-Date: 10/25/2021
+Email: liang.693@osu.edu
+Date: 11/14/2021
 
-histogram binning calibration [1] of label posteriors for argmax-selected
-predictions linear scaling of the remaining classes' softmax.
+This is an implementation of histogram binning calibration [1] for argmax-selected
+predictions, followed by linear scaling of the remaining classes' softmax scores.
 
 [1] Zadrozny, Bianca and Elkan, Charles. Obtaining calibrated probability
     estimates from decision trees and naive bayesian classifiers.
@@ -35,7 +35,7 @@ class histogram_binning_calibration(nn.Module):
         need to call histogram_binning() method first
         Args:
             input: input examples for the base model, e.g., 1 batch of image
-                   tensors of shape (batch_size, height, width)
+                   tensors of shape (batch_size, channels, height, width)
         Returns:
             calibrated softmax vectors of shape (batch_size, num_classes)
         """
