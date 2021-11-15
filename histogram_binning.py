@@ -22,7 +22,7 @@ from models import *
 class histogram_binning_calibration(nn.Module):
 
     def __init__(self, model, n_bins=15, device='cpu'):
-        super(histogram_binning_posterior_estimator,self).__init__()
+        super(histogram_binning_calibration,self).__init__()
         self.base_model = model.to(device)
         self.base_model.eval()
 

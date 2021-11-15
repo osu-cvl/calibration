@@ -1,8 +1,9 @@
 ## Neural Network Calibration Gist
 This repo contains the following calibration methods for deep neural networks:
-- temperature scaling
-- class-wise temperature scaling
 - histogram binning [1]
+- temperature scaling [ToDo]
+- class-wise temperature scaling [ToDo]
+
 
 ## Setup
 - python 3.x
