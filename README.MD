@@ -42,7 +42,7 @@ sm_calib, flags, preds = hist_est(test_data)
 # call the viz_of_mapping_function() method after applying histogram binning
 hist_est.viz_of_mapping_function()
 ```
-![histogram mapping](assets\histogram_mapping_viz.pdf)
+![histogram mapping](./assets/histogram_mapping_viz.png)
 
 ## Reference
 [1] Zadrozny, Bianca and Elkan, Charles. Obtaining calibrated probability estimates from decision trees and naive bayesian classifiers. In ICML, pp. 609–616, 2001.
