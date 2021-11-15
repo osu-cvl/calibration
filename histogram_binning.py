@@ -4,7 +4,7 @@ Affiliation: Computer Vision Lab, Ohio State University
 Email:
 Date: 10/25/2021
 
-histogram binning estimation [1] of label posteriors for argmax-selected
+histogram binning calibration [1] of label posteriors for argmax-selected
 predictions linear scaling of the remaining classes' softmax.
 
 [1] Zadrozny, Bianca and Elkan, Charles. Obtaining calibrated probability
@@ -19,7 +19,7 @@ import numpy as np
 from torch.nn import functional as F
 from models import *
 
-class histogram_binning_posterior_estimator(nn.Module):
+class histogram_binning_calibration(nn.Module):
 
     def __init__(self, model, n_bins=15, device='cpu'):
         super(histogram_binning_posterior_estimator,self).__init__()
@@ -29,7 +29,7 @@ class histogram_binning_posterior_estimator(nn.Module):
         self.n_bins = n_bins
         self.device = device
 
-    def forward(self, input, opt):
+    def forward(self, input):
         """
         applying histogram binning + linear rescaling to input logits
         need to call histogram_binning() method first
@@ -43,14 +43,13 @@ class histogram_binning_posterior_estimator(nn.Module):
         input = input.to(self.device)
         logits = self.base_model(input)
         softmax_output = F.softmax(logits,dim=1)
-        if opt=='iteration':
-            return self.get_calibrated_softmax_vector(softmax_output)
-        else: # vectorize
-            return self.get_calibrated_softmax_vector_vectorized(softmax_output)
+
+        return self.get_calibrated_softmax_vector(softmax_output)
+
 
     def histogram_binning(self, val_loader, verbose=False):
         """
-        apply histogram binning [1] posterior estimation approach
+        apply histogram binning [1] classifier calibration approach
         to softmax scores of top1 predictions output by the base model
         Args:
             val_loader: dataloader points to validation set
@@ -100,7 +99,7 @@ class histogram_binning_posterior_estimator(nn.Module):
         Return:
             res: tuple(torch.tensor(scalar), flag), where torch.tensor(scalar)
                  is the estimated label posterior from histogram binning, and
-                 flag indicates whether the estimation is valid (1) or not (0)
+                 flag indicates whether the calibration is valid (1) or not (0)
                  Estimated value could be undefined due to encountering of empty
                  bin corresponding to the input sm_query softmax value
         """
@@ -119,59 +118,22 @@ class histogram_binning_posterior_estimator(nn.Module):
         else:
             return (res, 1)
 
-    def get_posterior_vectorized(self,sm):
-        """
-        Args:
-            sm: torch.tensor.shape = (n_example, n_class), softmax matrix
-                      extract from base network
-        Return:
-            res: tuple(res, preds, flags)
-                 res: calibrated softmax of argmax selected classes
-                      torch.tensor.shape = (n_example,)
-                 preds: argmax selected classes (predictions),
-                        torch.tensor.shape = (n_examples)
-                 flags: flag for each example indicating whether the histogram
-                        binning calibration is valid
-        """
-        sm_query, preds = torch.max(sm, dim=1)
-        idx = torch.empty(preds.shape)
-
-        bin_edges = torch.linspace(0, 1, self.n_bins + 1)
-        self.bin_lowers = bin_edges[:-1]
-        self.bin_uppers = bin_edges[1:]
-        for i, (bin_lower, bin_upper) in enumerate(zip(self.bin_lowers, self.bin_uppers)):
-            in_bin = sm_query.gt(bin_lower.item()) * sm_query.le(bin_upper.item())
-            prop_in_bin = in_bin.float().mean()
-            if prop_in_bin.item() > 0:
-                idx[in_bin] = i
-        #print(type(idx),type(idx[0]),idx[0],idx.size())
-        #exit()
-        #print(idx)
-        #exit()
-        res = self.histogram[idx.type(torch.LongTensor)].to(self.device)
-        flags = torch.ones(res.shape).to(self.device)
-        flags[res == -1.0] = 0
-        res[res == -1.0] = sm_query[res == -1.0]
-
-        #print(f'invalid flags cnt :{torch.sum(flags==0)}')
-
-        print('sm_query: ',sm_query[:5])
-        print('sm_calib: ',res[:5])
-        #exit()
-
-        return res, preds, flags
-
     def get_calibrated_softmax_vector(self,sm):
         """
         Args:
-            sm: softmax vector of shape (n_class, n_example)
+            sm: softmax vector of shape (n_example, n_class)
         Return:
-            rescaled_sm: calibrated softmax vector of shape (n_class, n_example)
-                         with its argmax selected softmax score calibrated
-                         according to histogram binning and the remaining
-                         softmax scores rescaled linearly such that the
-                         softmax scores for all classes sum to 1.0, this may
-                         alter the argmax-selection result
+            sm_calib: calibrated softmax vector of shape (n_example, n_class)
+                      with its argmax selected softmax score calibrated
+                      according to histogram binning and the remaining
+                      softmax scores rescaled linearly such that the
+                      softmax scores for all classes sum to 1.0, this may
+                      alter the argmax-selection result
+            valid_flag: a vector of scaler flags of shape (n_example,) indicating
+                        if the histogram binning calibration for the associated
+                        example is valid (1) or not (0)
+            predictions: predictions derived from argmax selection based on the
+                         raw examlpes
         """
 
         with torch.no_grad():
@@ -193,59 +155,8 @@ class histogram_binning_posterior_estimator(nn.Module):
                 # in case some tiny numerical impreicison
                 sm_calib[i] = rescaled_sm/torch.sum(rescaled_sm)
 
-            # print(f'valid estimation: {torch.sum(valid_flag).item()}/{n_examples}')
-
-            return sm_calib, valid_flag
-
-    def get_calibrated_softmax_vector_vectorized(self,sm):
-
-
-        with torch.no_grad():
-            est_posterior, preds, flags = self.get_posterior_vectorized(sm)
-            mask = torch.ones_like(sm)
-
-            mask[:,preds] = 0.0 # BUG-LINE
-
-            remain_norm = 1.0 - est_posterior
-            sm_calib = sm * mask
-            # DEBUG
-            # sm_calib_sum = torch.sum(sm_calib, dim=1)
-            # print('0th sm_calib_sum: ',sm_calib_sum[:5])
-            # print('remain_norm: ', remain_norm[:5])
-
-            sm_calib = sm_calib / torch.sum(sm_calib, dim=1).reshape(-1,1)
-            # DEBUG
-            # sm_calib_sum = torch.sum(sm_calib, dim=1)
-            # print('1st sm_calib_sum: ',sm_calib_sum[:5])
-            # print('remain_norm: ', remain_norm[:5])
-
-            sm_calib = sm_calib * remain_norm.reshape(-1,1)
-            # DEBUG
-            # sm_calib_sum = torch.sum(sm_calib, dim=1)
-            # print('2nd sm_calib_sum: ',sm_calib_sum[:5])
-            # print('est_posterior[:5]: ', est_posterior[:5])
-
-            sm_calib[:, preds] = est_posterior # BUG-LINE
-
-            # DEBUG
-            # print('preds.shape: ', preds.size())
-            # print('est_posterior.shape: ', est_posterior.size())
-            # print(f'{sm_calib[0,preds[0]]}=={est_posterior[0]}')
-            # print(f'{sm_calib[1,preds[1]]}=={est_posterior[1]}')
-            # print(f'{sm_calib[2,preds[2]]}=={est_posterior[2]}')
-            # print(f'{sm_calib[3,preds[3]]}=={est_posterior[3]}')
-            # print(f'{sm_calib[4,preds[4]]}=={est_posterior[4]}')
-            # sm_calib_sum = torch.sum(sm_calib, dim=1)
-            # sm_sum = torch.sum(sm, dim=1)
-            # print('3rd sm_calib_sum: ',sm_calib_sum[:5])
-            # print(sm_sum[:5])
-            # exit()
-
-            # in case of numerical imprecision
-            # rescaled_sm = rescaled_sm / torch.sum(rescaled_sm, dim=1).reshape(-1,1)
-        return sm_calib, flags
-
-
+            # print(f'valid calibration: {torch.sum(valid_flag).item()}/{n_examples}')
+            return sm_calib, valid_flag, predictions
 
     def viz_of_mapping_function(self):
         """
@@ -258,7 +169,7 @@ class histogram_binning_posterior_estimator(nn.Module):
 
         sm_calib = torch.empty([len(sm_q),],dtype=float)
         for i, sm in enumerate(sm_q):
-            sm_calib[i] = self.get_posterior(sm)
+            sm_calib[i], _ = self.get_posterior(sm)
 
         # convert to ndarray
         sm_q = sm_q.numpy()
@@ -332,7 +243,7 @@ if __name__=='__main__':
 
     # init class instance
     n_bins = 15
-    hist_est = histogram_binning_posterior_estimator(base_model,n_bins,device)
+    hist_est = histogram_binning_calibration(base_model,n_bins,device)
 
     # run histogram binning on validation set
     hist_est.histogram_binning(val_loader,True)
@@ -340,64 +251,43 @@ if __name__=='__main__':
     print(f'learned histogram: \n{hist}')
 
     # viz of the histogram binning mapping function
-    # hist_est.viz_of_mapping_function()
+    hist_est.viz_of_mapping_function()
 
     # applying histogram binning + linear rescaling calibration to test set -- #
-    """
-    option = 'iteration'
-    sm_list = []
-    label_list = []
-    start = time.time()
-    with torch.no_grad():
-        for i, (input, label) in enumerate(test_loader):
-            input = input.to(device)
-            # return calibrated softmax vector and flags for valid calibration
-            sm_calib, _ = hist_est(input, option)
-            sm_list.append(sm_calib)
-            label_list.append(label)
-            print(f'calibrating {i+1}/{len(test_loader)} batches')
-    end = time.time()
-    print(f'no vectorization, elapse time: {end-start:.2f} sec')
-
-    # calibrated softmax vectors and its assocaited ground truth labels
-    sm_list = torch.cat(sm_list).cpu().numpy()
-    label_list = torch.cat(label_list).cpu().numpy()
-
-    pred = np.argmax(sm_list,axis=1)
-    acc = np.sum(pred==label_list)/len(label_list)
-    print(f'calibrated model prediction accuracy {acc*100:.2f}%')
-    """
-
-    option = 'iteration'
     sm_list = []
     label_list = []
     flag_list = []
+    raw_preds_list = []
+
     start = time.time()
     with torch.no_grad():
         for i, (input, label) in enumerate(test_loader):
             input = input.to(device)
             # return calibrated softmax vector and flags for valid calibration
-            sm_calib, flags = hist_est(input, option)
+            sm_calib, flags, preds = hist_est(input)
             sm_list.append(sm_calib)
+            raw_preds_list.append(preds)
             flag_list.append(flags)
             label_list.append(label)
-            #print(f'calibrating {i+1}/{len(test_loader)} batches')
+            print(f'calibrating {i+1}/{len(test_loader)} batches')
+
     end = time.time()
-    print(f'vectorization, elapse time: {end-start:.2f} sec')
+    print(f'elapse time: {end-start:.2f} sec')
 
     # calibrated softmax vectors and its assocaited ground truth labels
     sm_list = torch.cat(sm_list).cpu().numpy()
     label_list = torch.cat(label_list).cpu().numpy()
     flag_list = torch.cat(flag_list).cpu().numpy()
+    raw_preds_list = torch.cat(raw_preds_list).cpu().numpy()
 
-    print(f'sum(flag_list)/all_examples: {np.sum(flag_list)}/{len(flag_list)}')
+    print(f'valid calibration examples: {int(np.sum(flag_list))}/{len(flag_list)}')
 
-    sm_sum = np.sum(sm_list, axis=1)
-    print(f'sm_sum = 1, cnt: {np.sum(sm_sum==1.0)}/{sm_list.shape[0]}')
+    acc_raw = np.sum(raw_preds_list==label_list)/len(label_list)
+    print(f'original model prediction accuracy {acc_raw*100:.2f}%')
 
     pred = np.argmax(sm_list,axis=1)
-    acc = np.sum(pred==label_list)/len(label_list)
-    print(f'calibrated model prediction accuracy {acc*100:.2f}%')
+    acc_calib = np.sum(pred==label_list)/len(label_list)
+    print(f'calibrated model prediction accuracy {acc_calib*100:.2f}%')
 
 
 
