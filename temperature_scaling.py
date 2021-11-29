@@ -1,12 +1,13 @@
-# Authors: Nicholas Kashani Motlagh, Aswathnarayan Radhakrishnan, Dr. Jim Davis
-# Affiliation: Ohio State University
-# Email: kashanimotlagh.1@osu.edu
-# Date: 11/01/21
+"""
+Authors: Nicholas Kashani Motlagh, Aswathnarayan Radhakrishnan, Dr. Jim Davis
+Affiliation: Ohio State University
+Email: kashanimotlagh.1@osu.edu
+Date: 11/01/21
 
-# C. Guo, G. Pleiss, Y. Sun, and K. Q. Weinberger, “On Calibration of Modern Neural Networks,”
-# 34th Int. Conf. Mach. Learn. ICML 2017, vol. 3, pp. 2130–2143, Jun. 2017.
-# Available: https://arxiv.org/abs/1706.04599v2.
-
+Chuan Guo, Geoff Pleiss, Yu Sun, Kilian Q. Weinberger, "On Calibration of Modern Neural Networks,"
+In ICML, pp. 2130–2143, 2017.
+Available: https://arxiv.org/abs/1706.04599v2.
+"""
 # Import torch modules
 import torch
 from torch import nn, optim

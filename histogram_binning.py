@@ -4,12 +4,9 @@ Affiliation: Computer Vision Lab, Ohio State University
 Email: liang.693@osu.edu
 Date: 11/14/2021
 
-This is an implementation of histogram binning calibration [1] for argmax-selected
-predictions, followed by linear scaling of the remaining classes' softmax scores.
-
-[1] Zadrozny, Bianca and Elkan, Charles. Obtaining calibrated probability
-    estimates from decision trees and naive bayesian classifiers.
-    In ICML, pp. 609–616, 2001.
+Bianca Zadrozny, Charles Elkan, "Obtaining Calibrated Probability Estimates from
+Decision Trees and Naive Bayesian Classifiers," In ICML, pp. 609–616, 2001.
+Available: https://cseweb.ucsd.edu/~elkan/calibrated.pdf
 """
 
 import torch
