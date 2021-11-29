@@ -1,4 +1,4 @@
-## Neural Network Calibration
+## Neural Network Calibrations
 This repo contains the following calibration methods for deep neural networks:
 - Histogram Binning [1]
 - Temperature Scaling (global and class-wise) [2]
