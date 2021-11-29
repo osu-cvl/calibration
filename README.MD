@@ -46,7 +46,7 @@ hist_est.viz_of_mapping_function()
 ## Temperature scaling
 The temperature scaling [2] approaches are implemented within the `ModelWithTemperature` class. This class can either learn or grid-search for an appropriate temperature scalar both globally or per-class.
 
-#### Grid Example
+#### Example (Grid Search)
 ```python
 # Setup values to iterate over during learning or grid search
 # For the grid search approach
