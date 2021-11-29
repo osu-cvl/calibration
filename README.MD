@@ -91,9 +91,8 @@ print(f"After ece: {after_ece}")
 ![reliability_diagram](./assets/reliability_diagram.png)
 
 ## Reference
-[1] Zadrozny, Bianca and Elkan, Charles. Obtaining calibrated probability estimates from decision trees and naive bayesian classifiers. In ICML, pp. 609–616, 2001.
+[1] Bianca Zadrozny, Charles Elkan, "Obtaining Calibrated Probability Estimates from Decision Trees and Naive Bayesian Classifiers," In ICML, pp. 609–616, 2001.
 Available: https://cseweb.ucsd.edu/~elkan/calibrated.pdf
 
-[2] C. Guo, G. Pleiss, Y. Sun, and K. Q. Weinberger, “On Calibration of Modern Neural Networks,”
-34th Int. Conf. Mach. Learn. ICML 2017, vol. 3, pp. 2130–2143, Jun. 2017.
+[2] Chuan Guo, Geoff Pleiss, Yu Sun, Kilian Q. Weinberger, "On Calibration of Modern Neural Networks," In ICML, pp. 2130–2143, 2017.
 Available: https://arxiv.org/abs/1706.04599v2.
