@@ -657,3 +657,54 @@ class PerClassECE(nn.Module):
             if prop_in_bin[i]>0:
                 bin_precision[i] = acc[in_bin].float().mean()
         return bin_precision, count_in_bin
+
+
+
+if __name__=="__main__":
+    import torchvision
+    import torchvision.transforms as transforms
+    transform = transforms.Compose(
+        [transforms.ToTensor(),
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+
+    batch_size = 32
+
+    trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
+                                            download=True, transform=transform)
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size,
+                                            shuffle=True, num_workers=2)
+
+    testset = torchvision.datasets.CIFAR10(root='./data', train=False,
+                                        download=True, transform=transform)
+    testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size,
+                                            shuffle=False, num_workers=2)
+
+    classes = ('plane', 'car', 'bird', 'cat',
+           'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
+    # apply histogram binning approach --------------------------------------- #
+
+    # load base model
+    base_model = load_model(model_path)
+    device = 'cuda'
+
+    # init class instance
+    n_bins = 15
+    ece_criterion = ECE(n_bins=n_bins, device=device)
+    pece_criterion = PerClassECE(n_bins=n_bins, device=device)
+    # run histogram binning on validation set
+    ece = ece_criterion.compute_ece(base_model, testloader)
+    print(f"ECE: {ece:.2f}")
+    pece = pece_criterion.compute_ece(base_model, testloader)
+    print(f"Per-class ECE: {ece.mean():.2f} +- {ece.std():.2f}")
+
+    model_temp_scaled = ModelWithTemperature(model=base_model, n_bins=n_bins, strategy="grid",
+                                             per_class=True, device=device)
+    
+    ece = ece_criterion.compute_ece(model_temp_scaled, testloader)
+    print(f"ECE: {ece:.2f}")
+    pece = pece_criterion.compute_ece(model_temp_scaled, testloader)
+    print(f"Per-class ECE: {ece.mean():.2f} +- {ece.std():.2f}")
+
+    # viz of the histogram binning mapping function
+    ece_criterion.reliability_diagram_and_bin_count()
+    pece_criterion.reliability_diagram_and_bin_count()
