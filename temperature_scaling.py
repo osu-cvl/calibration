@@ -5,7 +5,7 @@ Email: kashanimotlagh.1@osu.edu
 Date: 11/01/21
 
 Chuan Guo, Geoff Pleiss, Yu Sun, Kilian Q. Weinberger, "On Calibration of Modern Neural Networks,"
-In ICML, pp. 2130–2143, 2017.
+In ICML, pp. 2130-2143, 2017.
 Available: https://arxiv.org/abs/1706.04599v2.
 """
 # Import torch modules
@@ -365,7 +365,6 @@ class ModelWithTemperature(nn.Module):
     def reliability_diagram_and_bin_count(self):
         """Plots reliability and bin count diagrams
         """
-        import matplotlib.pyplot as plt
         if self.per_class:
             preds = torch.argmax(self.logits, dim=1)
             for c_idx in range(self.num_classes):
