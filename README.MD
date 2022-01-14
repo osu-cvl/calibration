@@ -50,7 +50,7 @@ The temperature scaling [2] approaches are implemented within the `ModelWithTemp
 ```python
 # Setup values to iterate over during learning or grid search
 # For the grid search approach
-temps = torch.linspace(0.25, 4.0, 1000)
+temps = torch.linspace(0.25, 4.0, 100)
 # For the learned approach
 lrs = torch.linspace(0.001, 0.01, 10)
 num_iters = torch.linspace(50, 100, 10)

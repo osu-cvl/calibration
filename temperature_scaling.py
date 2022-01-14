@@ -659,8 +659,15 @@ class PerClassECE(nn.Module):
         return bin_precision, count_in_bin
 
 
+def load_model(path):
+    print("Load your torch model")
+    pass
 
 if __name__=="__main__":
+    """An example using CIFAR10. Note that this code will not run correctly until load_model() is implemented.
+    For this code to work, load_model() should return a pytorch model suitable to classify CIFAR10. See
+    below.
+    """
     import torchvision
     import torchvision.transforms as transforms
     transform = transforms.Compose(
@@ -668,11 +675,6 @@ if __name__=="__main__":
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
     batch_size = 32
-
-    trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
-                                            download=True, transform=transform)
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size,
-                                            shuffle=True, num_workers=2)
 
     testset = torchvision.datasets.CIFAR10(root='./data', train=False,
                                         download=True, transform=transform)
@@ -684,7 +686,10 @@ if __name__=="__main__":
     # apply histogram binning approach --------------------------------------- #
 
     # load base model
-    base_model = load_model(model_path)
+    #####################################
+    # CHANGE THIS LINE
+    base_model = load_model("model_path")
+    #####################################
     device = 'cuda'
 
     # init class instance
@@ -695,16 +700,21 @@ if __name__=="__main__":
     ece = ece_criterion.compute_ece(base_model, testloader)
     print(f"ECE: {ece:.2f}")
     pece = pece_criterion.compute_ece(base_model, testloader)
-    print(f"Per-class ECE: {ece.mean():.2f} +- {ece.std():.2f}")
+    print(f"Per-class ECE: {pece.mean():.2f} +- {pece.std():.2f}")
 
     model_temp_scaled = ModelWithTemperature(model=base_model, n_bins=n_bins, strategy="grid",
                                              per_class=True, device=device)
-    
+    # Setup values to iterate over during learning or grid search
+    # For the grid search approach
+    temps = torch.linspace(0.25, 4.0, 100)
+    temperature = model_temp_scaled.set_temperature(testloader, t_vals=list(temps))
+    print(f"Temperature: {temperature:.2f}")
+
     ece = ece_criterion.compute_ece(model_temp_scaled, testloader)
     print(f"ECE: {ece:.2f}")
     pece = pece_criterion.compute_ece(model_temp_scaled, testloader)
-    print(f"Per-class ECE: {ece.mean():.2f} +- {ece.std():.2f}")
+    print(f"Per-class ECE: {pece.mean():.2f} +- {pece.std():.2f}")
 
-    # viz of the histogram binning mapping function
+    # viz of bin reliability and counts
     ece_criterion.reliability_diagram_and_bin_count()
     pece_criterion.reliability_diagram_and_bin_count()
