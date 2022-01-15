@@ -51,9 +51,14 @@ model_temp = ModelWithTemperature(model=base_model,
 # Set temperature of model using grid search
 # only t_vals required for grid
 # only lrs and num_iters required for learn
+# UNCOMMENT FOR LEARNED TEMPERATURE SCALING
+# temperature = model_temp.set_temperature(val_loader,
+#                            lrs=list(lrs),
+#                            num_iters=list(num_iters))
+# AND COMMENT OUT FOR LEARNED TEMPERATURE SCALING
 temperature = model_temp.set_temperature(val_loader,
-                            t_vals=list(temps), lrs=list(lrs),
-                            num_iters=list(num_iters))
+                            t_vals=list(temps))
+
 
 # Compute ece of temperature-scaled model on validation set
 after_ece = ece_criterion.compute_ece(model_temp, val_loader)
