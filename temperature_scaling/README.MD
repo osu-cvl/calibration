@@ -29,7 +29,7 @@ n_bins = 15
 # ece_criterion = PerClassECE(n_bins=NBINS)
 ece_criterion = ECE(n_bins=NBINS)
 
-# Compute ece of model on validation set
+# Compute ece of model on validation dataloader
 before_ece = ece_criterion.compute_ece(model, val_loader)
 print(f"Before ece: {before_ece}")
 # Reliability diagrams and bin count diagram
