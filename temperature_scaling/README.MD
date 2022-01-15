@@ -11,6 +11,7 @@ This repo contains the Temperature Scaling (global and class-wise) [1] calibrati
 The temperature scaling [1] approaches are implemented within the `ModelWithTemperature` class. This class can either learn or grid-search for an appropriate temperature scalar both globally or per-class.
 
 #### Example (Grid Search)
+The following example finds temperature using grid search. The learned approach is commented out and can be swapped with grid search.
 ```python
 # Setup values to iterate over during learning or grid search
 # For the grid search approach
@@ -37,10 +38,19 @@ ece_criterion.reliability_diagram_and_bin_count()
 
 
 # Create new model with temperature scaling
+# UNCOMMENT FOR LEARNED TEMPERATURE SCALING
+# model_temp = ModelWithTemperature(model=base_model,
+#                            strategy="learn", per_class=True,
+#                            device=device, n_bins=NBINS)
+# AND COMMENT OUT FOR LEARNED TEMPERATURE SCALING
 model_temp = ModelWithTemperature(model=base_model,
                             strategy="grid", per_class=True,
                             device=device, n_bins=NBINS)
+
+
 # Set temperature of model using grid search
+# only t_vals required for grid
+# only lrs and num_iters required for learn
 temperature = model_temp.set_temperature(val_loader,
                             t_vals=list(temps), lrs=list(lrs),
                             num_iters=list(num_iters))
