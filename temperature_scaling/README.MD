@@ -29,25 +29,27 @@ n_bins = 15
 # ece_criterion = PerClassECE(n_bins=NBINS)
 ece_criterion = ECE(n_bins=NBINS)
 
-# Returns a tensor of
+# Compute ece of model on validation set
 before_ece = ece_criterion.compute_ece(model, val_loader)
 print(f"Before ece: {before_ece}")
 # Reliability diagrams and bin count diagram
 ece_criterion.reliability_diagram_and_bin_count()
 
 
-# Create new object
+# Create new model with temperature scaling
 model_temp = ModelWithTemperature(model=base_model,
                             strategy="grid", per_class=True,
                             device=device, n_bins=NBINS)
-
+# Set temperature of model using grid search
 temperature = model_temp.set_temperature(val_loader,
                             t_vals=list(temps), lrs=list(lrs),
                             num_iters=list(num_iters))
 
+# Compute ece of temperature-scaled model on validation set
 after_ece = ece_criterion.compute_ece(model_temp, val_loader)
 # Reliability diagrams and bin count diagram
 ece_criterion.reliability_diagram_and_bin_count()
+
 print(f"Final temperature: {temperature}")
 print(f"After ece: {after_ece}")
 ```
