@@ -1,5 +1,5 @@
 ## Neural Network Calibrations
-This repo contains the Histogram Binning [1] calibration method for deep neural networks:
+This repo contains the Histogram Binning [1] calibration method for deep neural networks.
 
 ## Setup
 - python 3.x
